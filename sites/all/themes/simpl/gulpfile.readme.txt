@@ -1,0 +1,13 @@
+// install gulp globally
+$ npm install gulp -g
+
+// install it locally to the project. cd into your project and run the following
+$ npm install gulp --save-dev
+
+// install the following plugins
+$ npm install gulp-compass
+$ npm install gulp-util
+$ npm install gulp-livereload
+
+
+

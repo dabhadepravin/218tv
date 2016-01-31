@@ -1,0 +1,628 @@
+<?php
+
+
+
+function core_init()
+{
+
+
+}
+
+
+/**
+ * Implements hook_wysiwyg_editor_settings_alter().
+ */
+function core_wysiwyg_editor_settings_alter(&$settings, $context) {
+    if ($context['profile']->editor == 'ckeditor') {
+        $settings['extraAllowedContent'] = array(
+            'img[title,alt,src,data-cke-saved-src](wysiwyg-break,drupal-content);video[width,height,controls,src](*);source[src,type];audio[controls,src](*);img[*](media-element,file-default)',
+            'a[type,length,href]',
+        );
+    }
+}
+
+/* Router  + Themes for external calls */
+
+function core_menu()
+{
+    $items['show/%'] = array(
+
+        'page callback' => 'vodShow',
+        'page arguments' => array(1),
+        'access callback' => true,
+        'type' => MENU_NORMAL_ITEM
+    );
+
+    $items['episode/%'] = array(
+
+        'page callback' => 'vodEpisode',
+        'page arguments' => array(1),
+        'access callback' => true,
+        'type' => MENU_NORMAL_ITEM
+    );
+
+    $items['programs'] = array(
+        'page callback' => 'vodPrograms',
+        'access callback' => true,
+        'type' => MENU_NORMAL_ITEM
+    );
+    return $items;
+}
+
+function core_theme()
+{
+    return array(
+        'show' => array(
+            'variables' => array(),
+            'template' => 'show'
+        ),
+        'episode' => array(
+            'variables' => array(),
+            'template' => 'episode'
+        ),
+        'programs' => array(
+            'variables' => array(),
+            'template' => 'programs'
+        )
+    );
+}
+
+function vodShow($id) {
+    return theme('show', array('data'=>$id));
+}
+
+function vodEpisode($id) {
+    return theme('episode', array('data'=>$id, 'popular'=>get_v('popular')));
+}
+
+function vodPrograms() {
+    return theme('programs', array());
+}
+
+
+function json_articles($tid)
+{
+
+    $articles = array_values(get_vn('taxonomy_term', array($tid), 25, 0));
+    $out = array_map(filter_article, $articles);
+    drupal_add_http_header('Content-Type', 'application/json; utf-8');
+    echo drupal_json_encode($out);
+
+
+}
+
+function filter_article($article)
+{
+    $a = new stdClass();
+    $a->nid = $article->nid;
+    $a->title = $article->title;
+    $a->image = render_image('x780', $article->field_image['und'][0]['uri']);
+    $a->publish_date = format_date($article->created, "custom", "M d, Y");
+    $a->abs_url = url('node/' . $article->nid, array('absolute' => TRUE));
+    $a->body = $article->body['und'][0]['safe_value'];
+    return $a;
+}
+
+/* --------------- */
+
+
+function get_node($nid)
+{
+    $node = node_load($nid);
+
+    $node->publish_date = format_date($node->created, "custom", "D d-m-Y");
+
+    if (isset($node->field_video['und'][0])) {
+        $node->video = file_create_url($node->field_video['und'][0]['uri']);
+    }
+    if (isset($node->body['und'])) {
+        $summary = string_trimmer($node->body['und'][0]['summary']);
+        $node->teaser = !empty($summary) ? strip_tags($summary) : string_trimmer($node->body['und'][0]['safe_value']);
+    }
+
+    if (isset($node->field_tags['und']) && !empty($node->field_tags['und'])) {
+        $tags = array();
+        foreach ($node->field_tags['und'] as $tax) {
+            $term = taxonomy_term_load($tax['tid']);
+            $tag_link = drupal_get_path_alias('taxonomy/term/' . $term->tid);
+            // $tags[] = l('<li>' . $term->name . '</li>', $tag_link, array('html' => TRUE));
+
+        }
+    }
+
+    $node->tags = $tags;
+
+#opinions
+
+    if (isset($node->field_author['und']) && count($node->field_author['und'])) {
+        $a = node_load($node->field_author['und'][0]['target_id']);
+        $author = new stdClass();
+        $author->title = $a->title;
+
+        if (isset($a->field_author_image['und']) && count($a->field_author_image['und'])) {
+            $author->x154 = image_style_url('154', $a->field_author_image['und'][0]['uri']);
+            $author->x72 = image_style_url('72', $a->field_author_image['und'][0]['uri']);
+
+        }
+        $node->author = $author;
+
+
+    }
+
+
+#category
+
+    //$node->category = get_category($node);
+
+
+#related articles
+
+    if (isset($node->field_related['und']) && count($node->field_related['und'])) {
+        foreach ($node->field_related['und'] as $related_node) {
+
+            $r = node_load($related_node['target_id']);
+
+            $r->x152 = image_style_url('152', $r->field_image['und'][0]['uri']);
+            $r->x96 = image_style_url('96', $r->field_image['und'][0]['uri']);
+            $r->href = drupal_get_path_alias('node/' . $r->nid);
+            $r->abs_url = url('node/' . $r->nid, array('absolute' => TRUE));
+            //$r->category = get_category($r);
+            $related[] = $r;
+
+        }
+        $node->related = $related;
+
+    }
+
+
+    $node->href = drupal_get_path_alias('node/' . $node->nid);
+    $node->link = l($node->title, $node->href, array('html' => TRUE));
+    $node->abs_url = url('node/' . $node->nid, array('absolute' => TRUE));
+    //$stats = statistics_get($nid);
+    $node->totalcount = $stats['totalcount'];
+    return $node;
+
+}
+
+function get_section($node)
+{
+
+    if (isset($node->field_section['und']) && count($node->field_section['und'])) {
+        $cids = array();
+        foreach ($node->field_section['und'] as $tax) {
+            #prepare for future, get list of section ids
+            $cids[] = $tax['tid'];
+        }
+
+
+        if (isset($cids[0])) {
+            $term = taxonomy_term_load($cids[0]);
+            $section = new stdClass();
+            $section->title = $term->name;
+            $section->href = url(drupal_get_path_alias('taxonomy/term/' . $term->tid), array('absolute' => true));
+            $section->tid = $term->tid;
+
+            return $section;
+
+        }
+
+    }
+
+
+}
+
+function get_view_count($nid)
+{
+    $stats = statistics_get($nid);
+    return $stats['totalcount'];
+
+}
+
+function get_section_link($tid)
+{
+    return url(drupal_get_path_alias('taxonomy/term/' . $tid), array('absolute' => true));
+
+
+}
+
+function get_cat_bread($tid)
+{
+    $out = array();
+    $tree = taxonomy_get_parents_all($tid);
+    foreach (array_reverse($tree) as $t) {
+        $out[] = l($t->name, url(drupal_get_path_alias('taxonomy/term/' . $t->tid), array('absolute' => true)));
+
+    }
+    return $out;
+
+}
+
+
+function get_root($tid)
+{
+
+    $term_parents = taxonomy_get_parents_all($tid);
+    return $term_parents[count($term_parents) - 1];
+
+
+}
+
+
+function get_breadcrumb($arr)
+{
+
+    return theme_item_list(array(
+            'items' => $arr,
+            'type' => 'ul',
+            'attributes' => array(
+                'class' => 'custom-breadcrumb hidden-phone'
+            )
+
+        )
+    );
+}
+
+function get_cat($node)
+{
+    pprint($node->field_category['und'][0]);
+}
+
+/* Helper Functions */
+
+function n_load($nid)
+{
+
+    $obj = new stdClass();
+
+    $n = node_load($nid);
+    $obj->id = $n->nid;
+    $obj->title = $n->title;
+    $obj->href = render_href($nid);
+    $obj->type = $n->type;
+
+    if (isset($n->field_subtitle['und'][0])) {
+        $obj->subtitle = $n->field_subtitle['und'][0]['safe_value'];
+    }
+
+    $obj->teaser = render_teaser($n);
+
+    if($n->type != 'social' && $n->field_image['und'][0]['uri']) {
+        $obj->image = array();
+        foreach (image_style_options(false) as $key => $value):
+            $obj->image[$key] = render_image($key, $n->field_image['und'][0]['uri']);
+        endforeach;
+    }
+
+    //load tags taxonomy
+    if (isset($n->field_tags['und']) && !empty($n->field_tags['und'])) {
+        $tags = array();
+        $tags_html = array();
+        $tags_obj = array();
+
+        foreach ($n->field_tags['und'] as $key => $tax) {
+            $term = taxonomy_term_load($tax['tid']);
+            $tags[$key]['link'] = url(drupal_get_path_alias('taxonomy/term/' . $term->tid), array('absolute' => true));
+            $tags[$key]['name'] = $term->name;
+            $tags_html[] = '<li>' . l($tags[$key]['name'], $tags[$key]['link'], array('html' => TRUE)) . '</li>';
+        }
+
+        $tags_obj['html'] = implode($tags_html);
+        $tags_obj['terms'] = $tags;
+
+        $obj->tags = $tags_obj;
+        //pprint($tags_obj);
+    }
+
+    //load label taxonomy
+    if (isset($n->field_label['und']) && !empty($n->field_label['und'])) {
+        $labels = array();
+        foreach ($n->field_label['und'] as $key => $tax) {
+            $term = taxonomy_term_load($tax['tid']);
+            $label[$key]['link'] = url(drupal_get_path_alias('taxonomy/term/' . $term->tid), array('absolute' => true));
+            $label[$key]['name'] = $term->name;
+        }
+        $obj->labels = $label;
+    }
+
+    if($n->type == 'social') {
+        //$obj->title = $n->body['und'][0]['safe_value'];
+
+        $tid = $n->field_social_channel['und'][0]['tid'];
+        $term = taxonomy_term_load($tid);
+        $obj->social_channel = strtolower($term->name);
+        $obj->author = get_author($n);
+
+        //pprint($obj->author);
+    }
+
+
+    return $obj;
+}
+
+function render_href($nid)
+{
+    return url(drupal_get_path_alias('node/' . $nid), array('absolute' => true));
+
+}
+
+function render_video($uri)
+{
+    return 'http://static.afrigatenews.net.s3.amazonaws.com/' . substr($uri, 5);
+}
+
+/*
+ * Presets are; x108, x1100, x170, x195, x310, x440, x60, x780, x781
+ */
+
+function render_image($preset, $uri)
+{
+    return image_style_url($preset, $uri);
+
+}
+
+function render_tag($tag)
+{
+
+    return l($tag['taxonomy_term']->name, drupal_get_path_alias('taxonomy/term/' . $tag['tid']));
+
+
+}
+
+function render_date($date)
+{
+    return format_date($date, "custom", "M d, Y");
+}
+
+function get_tags($n)
+{
+    if (isset($n->field_tags['und']) && !empty($n->field_tags['und'])) {
+        $tags = array();
+        $tags_html = array();
+        $tags_obj = array();
+
+        foreach ($n->field_tags['und'] as $key => $tax) {
+            $term = taxonomy_term_load($tax['tid']);
+            $tags[$key]['link'] = url(drupal_get_path_alias('taxonomy/term/' . $term->tid), array('absolute' => true));
+            $tags[$key]['name'] = $term->name;
+            $tags_html[] = '<li>' . l($tags[$key]['name'], $tags[$key]['link'], array('html' => TRUE)) . '</li>';
+        }
+
+        $tags_obj['html'] = implode($tags_html);
+        $tags_obj['terms'] = $tags;
+        return $tags_obj;
+
+
+
+    }
+    else
+    {
+        return null;
+    }
+}
+
+function get_author($node){
+
+
+    if (isset($node->field_author['und']) && count($node->field_author['und'])) {
+        $a = node_load($node->field_author['und'][0]['target_id']);
+
+        $author = new stdClass();
+        $author->title = $a->title;
+        $author->nid = $a->nid;
+
+        if (isset($a->field_image['und']) && count($a->field_image['und'])) {
+            $author->image = image_style_url('x100', $a->field_image['und'][0]['uri']);
+            $author->image_src = $a->field_image['und'][0]['uri'];
+
+        }
+
+        if (isset($a->field_description['und']) && count($a->field_description['und'])){
+            $author->description = $a->field_description['und'][0]['safe_value'];
+        }
+        return $author;
+
+
+    }
+    else {
+        // must be an article page
+
+        $author = new stdClass();
+        $u = user_load($node->uid);
+        $author->title = $u->field_title['und'][0]['safe_value'];;
+        $author->description = $u->field_description['und'][0]['safe_value'];
+        $author->image = image_style_url('x100', $u->picture->uri);
+        return $author;
+
+    }
+    return null;
+}
+
+
+function render_icon($type)
+{
+
+    switch ($type) {
+
+        case 'video':
+            return '<i class="icon-facetime-video"></i>';
+        case 'gallery':
+            return '<i class="icon-camera"></i>';
+        default:
+            return '';
+
+    }
+
+
+}
+
+function render_teaser($node,$length=230)
+{
+    if (isset($node->body['und'])) {
+        $summary = string_trimmer($node->body['und'][0]['summary']);
+        return !empty($summary) ? strip_tags($summary) : string_trimmer(strip_tags($node->body['und'][0]['value']),$length);
+    }
+
+}
+
+
+function render_ar_date($date)
+{
+
+
+    $months = array(
+        "Jan" => "يناير",
+        "Feb" => "فبراير",
+        "Mar" => "مارس",
+        "Apr" => "أبريل",
+        "May" => "مايو",
+        "Jun" => "يونيو",
+        "Jul" => "يوليو",
+        "Aug" => "أغسطس",
+        "Sep" => "سبتمبر",
+        "Oct" => "أكتوبر",
+        "Nov" => "نوفمبر",
+        "Dec" => "ديسمبر"
+    );
+
+
+    $en_month = date("M", ($date));
+
+    foreach ($months as $en => $ar) {
+        if ($en == $en_month) {
+
+            $ar_month = $ar;
+        }
+    }
+
+    $find = array(
+
+        "Sat",
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+
+    );
+
+    $replace = array(
+
+        "السبت",
+        "الأحد",
+        "الإثنين",
+        "الثلاثاء",
+        "الأربعاء",
+        "الخميس",
+        "الجمعة"
+
+    );
+
+    $ar_day_format = date('D', $date); // The Current Day
+
+    $ar_day = str_replace($find, $replace, $ar_day_format);
+
+    $ar_am_pm = array(
+        'pm' => 'مساءً',
+        'am' => 'صباحاً'
+    );
+
+    $standard = array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9");
+    $eastern_arabic_symbols = array("٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩");
+    $current_date = $ar_day . ' ' . date('d', $date) . ' / ' . $ar_month . ' / '. date('Y', $date) . '<span style="margin-right: 10px; float:left; direction: rtl">' . date('h:i ', $date) . $ar_am_pm[date('a', $date)] . '</span>';
+    //return str_replace($standard, $eastern_arabic_symbols, $current_date);
+    return $current_date;
+
+}
+
+function render_related($related)
+{
+
+    $href = drupal_get_path_alias('node/' . $related['target_id']);
+    return l(theme_image_style(array('style_name' => 'x209',
+        'width' => '209',
+        'height' => '118',
+        'path' => $related['entity']->field_image['und'][0]['uri'])),
+        $href, array('html' => true)) .
+    l($related['entity']->title, $href, array('attributes' => array('class' => 'related_stories_link')));
+
+}
+
+function render_menu($menu_name)
+{
+    $mm = array();
+    $menu = menu_load_links($menu_name);
+
+    foreach ($menu as $key => $m):
+        //pprint($m);
+        $mm[$key]['title'] = $m['link_title'];
+        $mm[$key]['href'] = url($m['link_path'], array('absolute'=>true));
+
+        if (isset($m['options']['content']['image'])) {
+            $mm[$key]['image'] = file_load($m['options']['content']['image']);
+        }
+    endforeach;
+
+    return $mm;
+}
+
+$count_to_str = array(
+    0 => 'zero',
+    1 => 'first',
+    2 => 'second',
+    3 => 'third',
+    4 => 'fourth',
+    5 => 'fifth',
+    6 => 'six',
+    7 => 'seven',
+    8 => 'eight',
+    9 => 'nine',
+    10 => 'ten'
+);
+
+function get_vn($view_name, $args_array, $limit = 5, $offset = 0)
+{
+
+    $v = views_get_view($view_name);
+    $v->set_arguments($args_array);
+    $v->set_items_per_page($limit);
+    $v->set_offset($offset);
+    $v->execute();
+
+    $result = array();
+    foreach ($v->result as $node) {
+        $result[] = $node->nid;
+    }
+
+    return node_load_multiple($result);
+}
+
+function get_v($view_name, $args_array, $limit = 5, $offset = 0)
+{
+
+    $v = views_get_view($view_name);
+    $v->set_arguments($args_array);
+    $v->set_items_per_page($limit);
+    $v->set_offset($offset);
+
+    $v->execute();
+    return $v->result;
+}
+
+function pprint($var)
+{
+    echo '<pre>';
+    print_r($var);
+    echo '</pre>';
+    exit;
+}
+
+function string_trimmer($str, $length = 230)
+{
+    $str = strip_tags($str);
+    $str .= " ";
+    $str = drupal_substr($str, 0, $length);
+    $str = drupal_substr($str, 0, mb_strrpos($str, " ", null, 'UTF-8'));
+    return $str;
+
+}

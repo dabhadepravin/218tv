@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/png" href="<?php echo base_path() . path_to_theme(); ?>/favicon.png">
+    <?php print $head; ?>
+    <title><?php print $head_title; ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="e_ei67hppLl50f5H4C-0AOQuuJ9KuIP6vrcOvi7Vxfo" />
+
+    <link rel="stylesheet"
+          href="<?php echo base_path() . path_to_theme() ?>/css/app.css?<?php echo variable_get('css_js_query_string', '0') ?>">
+    <?php print $styles; ?>
+    <?php print $scripts; ?>
+
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-67168629-1', 'auto');
+        ga('send', 'pageview');
+
+    </script>
+    <style>
+        .block .file-image {
+            height: auto;
+        }
+        .block .file-image a {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+    </style>
+</head>
+
+<body class="<?php print $classes; ?> <?php
+if (isset($GLOBALS['body-class'])) {
+    echo $GLOBALS['body-class'];
+} ?>" <?php print $attributes; ?>>
+
+<!--- facebook sdk -->
+
+<div id="fb-root"></div>
+<script>(function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.4&appId=599028756846382";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+
+<!-- end facebook sdk -->
+<div class="w-mtopmenu">
+    <div class="mtopmenu">
+        <div class="logo">
+            <a href="/"><img class="mtoplogo" src="<?php echo base_path() . path_to_theme() ?>/assets/mtoplogo.png" alt=""></a>
+        </div>
+        <div class="msearch-box">
+            <form action="/search/node">
+                <input type="text" class="searchtxt" placeholder="ابحث في 218" name="keys">
+                <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
+
+
+            </form>
+        </div>
+
+
+        <div class="mtwocell">
+            <div class="left">
+
+            </div>
+            <div class="right">
+                <ul>
+                    <?php foreach ($menus['nav'] as $index => $item): ?>
+                        <?php
+                        $url = strtok($_SERVER["REQUEST_URI"], '?');
+                        $url_hash = md5(parse_url($url, PHP_URL_PATH));
+                        $url_nav = strtok($item['href'], '?');
+                        $url_nav_hash = md5(parse_url($url_nav, PHP_URL_PATH));
+                        ?>
+                        <li><a class="<?php echo $url_hash == $url_nav_hash ? 'active' : '' ?>"
+                               href="<?php echo $item['href'] ?>"><?php echo $item['title'] ?></a></li>
+                    <?php endforeach ?>
+
+                </ul>
+
+            </div>
+        </div>
+
+        <div class="down">
+
+        </div>
+
+
+    </div>
+</div>
+
+
+<nav class="pushy pushy-right">
+    <ul>
+        <?php foreach ($menus['nav'] as $index => $item): ?>
+            <?php
+            $url = strtok($_SERVER["REQUEST_URI"], '?');
+            $url_hash = md5(parse_url($url, PHP_URL_PATH));
+            $url_nav = strtok($item['href'], '?');
+            $url_nav_hash = md5(parse_url($url_nav, PHP_URL_PATH));
+            ?>
+            <li><a class="<?php echo $url_hash == $url_nav_hash ? 'active' : '' ?>"
+                   href="<?php echo $item['href'] ?>"><?php echo $item['title'] ?></a></li>
+        <?php endforeach ?>
+
+    </ul>
+
+</nav>
+
+<?php print $page_top; ?>
+<div class="w-mnav">
+    <div class="mnav">
+        <div class="back">
+            <a href="/">رجوع</a>
+        </div>
+        <div class="burger">
+            <a class="menu-btn" href="#"><img src="<?php echo base_path() . path_to_theme() ?>/assets/burger.png"
+                                              alt=""></a>
+        </div>
+        <div class="logo">
+            <a href="<?php echo base_path() ?>"><img
+                    src="<?php echo base_path() . path_to_theme() ?>/assets/logo-mobile.svg" alt=""></a>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="w-header">
+    <div class="header">
+        <div class="logo">
+            <a href="<?php echo base_path() ?>"><img src="<?php echo base_path() . path_to_theme() ?>/assets/logo.svg"
+                                                     alt=""></a>
+        </div>
+    </div>
+</div>
+<div class="w-nav">
+    <div class="nav">
+        <ul>
+            <?php foreach ($menus['nav'] as $index => $item): ?>
+                <?php
+                $url = strtok($_SERVER["REQUEST_URI"], '?');
+                $url_hash = md5(parse_url($url, PHP_URL_PATH));
+                $url_nav = strtok($item['href'], '?');
+                $url_nav_hash = md5(parse_url($url_nav, PHP_URL_PATH));
+                ?>
+                <li><a class="<?php echo $url_hash == $url_nav_hash ? 'active' : '' ?>"
+                       href="<?php echo $item['href'] ?>"><?php echo $item['title'] ?></a></li>
+            <?php endforeach ?>
+        </ul>
+
+        <ul class="social">
+            <li><a href="https://www.facebook.com/218tv" target="_blank"><i class="fa fa-facebook"></i></a></li>
+            <li><a href="https://www.twitter.com/218tv" target="_blank"><i class="fa fa-twitter"></i></a></li>
+            <li><a href="https://plus.google.com/u/0/105631431473587138124/posts" target="_blank"><i
+                        class="fa fa-google-plus"></i></a></li>
+            <li><a href="https://www.youtube.com/channel/UCJaQYZQ8X3wOWtNDT6Wn3Rg" target="_blank"><i
+                        class="fa fa-youtube"></i></a></li>
+        </ul>
+
+        <div class="search-box">
+            <form action="/search/node">
+                <input type="text" class="searchtxt" placeholder="ابحث في 218" name="keys">
+                <input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;"/>
+
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="w-weather-newsletter">
+    <div class="weather-newsletter">
+        <div class="form-newsletter">
+            <!-- Begin MailChimp Signup Form -->
+            <link href="//cdn-images.mailchimp.com/embedcode/slim-081711.css" rel="stylesheet" type="text/css">
+            <style type="text/css">
+                #mc_embed_signup{background:#fff; clear:left; font:14px Helvetica,Arial,sans-serif; }
+                /* Add your own MailChimp form style overrides in your site stylesheet or in this style block.
+                   We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
+            </style>
+            <div id="mc_embed_signup">
+                <form action="//ana.us11.list-manage.com/subscribe/post?u=dc3c27747693723b928932a2a&amp;id=37251ca25b" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                    <div id="mc_embed_signup_scroll">
+
+                        <input type="email" value="" name="EMAIL" class="email" id="mce-EMAIL" placeholder="أدخل بريدك الالكتروني" required>
+                        <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                        <div style="position: absolute; left: -5000px;"><input type="text" name="b_dc3c27747693723b928932a2a_37251ca25b" tabindex="-1" value=""></div>
+                        <div class="submit_form_btn"><input type="submit" value="اشترك" name="subscribe" id="mc-embedded-subscribe" class="button"></div>
+                    </div>
+                </form>
+            </div>
+            <!--End mc_embed_signup-->
+        </div>
+        <ul>
+            <li>
+                <div class="icon ny">
+                    <img src="" class="weather-icon-ny" alt="Weather Icon"/>
+                </div>
+                <div class="info">
+                    <div>سبها</div>
+                    <div class="weather-temperature-ny"></div>
+                </div>
+            </li>
+            <li>
+                <div class="icon ca">
+                    <img src="" class="weather-icon-ca" alt="Weather Icon"/>
+                </div>
+                <div class="info">
+                    <div>بنغازي</div>
+                    <div class="weather-temperature-ca"></div>
+                </div>
+            </li>
+            <li>
+                <div class="icon tr">
+                    <img src="" class="weather-icon-tr" alt="Weather Icon"/>
+                </div>
+                <div class="info">
+                    <div>طرابلس</div>
+                    <div class="weather-temperature-tr"></div>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="site-overlay"></div>
+<div id="container">
+    <?php print $page; ?>
+</div>
+<div class="w-footer">
+    <div class="footer">
+        <div class="flogo">
+            <a href="<?php echo base_path() ?>"><img
+                    src="<?php echo base_path() . path_to_theme() ?>/assets/footer-logo.png" alt=""></a>
+        </div>
+
+        <ul class="nav">
+            <?php foreach ($menus['footer'] as $item): ?>
+                <li><a href="<?php echo $item['href'] ?>"><?php echo $item['title'] ?></a></li>
+            <?php endforeach ?>
+        </ul>
+
+        <ul class="social">
+            <li><a href="https://www.facebook.com/218tv" target="_blank"><i class="fa fa-facebook"></i></a></li>
+            <li><a href="https://www.twitter.com/218tv" target="_blank"><i class="fa fa-twitter"></i></a></li>
+            <li><a href="https://plus.google.com/u/0/105631431473587138124/posts" target="_blank"><i
+                        class="fa fa-google-plus"></i></a></li>
+            <li><a href="https://www.youtube.com/channel/UCJaQYZQ8X3wOWtNDT6Wn3Rg" target="_blank"><i
+                        class="fa fa-youtube"></i></a></li>
+        </ul>
+
+    </div>
+</div>
+
+
+<div class="mshrink hide">
+    <a class="" href="#"> <?php echo $mlabels[0] ?></a>
+</div>
+
+
+<div class="mrelated">
+    <a class="" href="#"> <?php echo $mlabels[1] ?></a>
+</div>
+
+<ul class="msocial">
+    <li>
+        <a href="#">
+            <div class="mface msi"></div>
+        </a>
+    </li>
+    <li>
+        <a href="#">
+            <div class="mtw msi">
+            </div>
+        </a>
+    </li>
+
+    <li>
+        <a href="#">
+            <div class="mgoogle msi">
+
+            </div>
+        </a>
+    </li>
+</ul>
+
+
+<?php print $page_bottom; ?>
+
+<script type="text/javascript"
+        src="<?php echo base_path() . path_to_theme() ?>/js/app.js?<?php echo variable_get('css_js_query_string', '0') ?>"></script>
+
+<script>
+
+    $('.mrelated a').on('click', function () {
+        $('.first').addClass('first-open');
+        $('.second').addClass('hide');
+        $('.msocial').addClass('hide');
+
+        $(this).parent().addClass('hide');
+        $('.mshrink').removeClass(('hide'));
+
+        //front hero
+        $('.w-hero').addClass('hide');
+        $('.main').addClass('secondary')
+
+    });
+
+    $('.mshrink a').on('click', function () {
+        $('.msocial').removeClass('hide');
+        $('.first').removeClass('first-open');
+        $('.second').removeClass('hide');
+
+        $(this).parent().addClass('hide');
+        $('.mrelated').removeClass(('hide'));
+        $('.w-hero').removeClass('hide');
+        $('.main').removeClass('secondary')
+
+
+    });
+
+
+</script>
+
+<?php if($is_front) {  ?>
+    <script>
+        $(function(){
+            $('.w-mnav').addClass('hide');
+            var waypoint = new Waypoint({
+                element: $('.hero'),
+                handler: function(direction) {
+                    $('.w-mnav').removeClass('trans');
+                }
+            });
+
+        });
+
+
+        var firstrun = true;
+        $(window).on('scroll',function(e){
+
+            if ($(this).scrollTop() > 648 && firstrun && $('.w-mtopmenu').is(':visible') ) {
+
+                $('.w-mtopmenu').remove();
+                $(this).scrollTop(0);
+                $('.w-mnav').removeClass('hide').addClass('trans');
+                firstrun = false;
+
+                //lol this is to make sure we reached point 1 because scrollTaop changes after removing the first block
+            };
+        });
+
+
+
+
+    </script>
+<?php } ?>
+
+</body>
+</html>

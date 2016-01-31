@@ -1,0 +1,8 @@
+name = Level09 Core Module
+description = Core APIs Module
+package = Level09
+core = 7.x
+
+
+
+

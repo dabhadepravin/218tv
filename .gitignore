@@ -1,0 +1,19 @@
+# Ignore configuration files that may contain sensitive information.
+sites/*/settings*.php
+
+# Ignore paths that contain user-generated content.
+sites/*/files
+sites/*/private
+
+backup/
+.*
+!.htaccess
+!.gitignore
+sites/default/files/xmlsitemap/
+sites/default/local_settings.php
+cache/
+*.pyc
+
+# Ignore node_modules
+node_modules/
+app.css.map
